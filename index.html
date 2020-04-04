@@ -52,7 +52,7 @@
             id: "6a9fa0b2ff3443fea12c6d8963c61562"
           },
           outFields: ["*"],
-		  title: "Datos COVID19"
+		  title: "Mapa de incidencia de Covid-19 por Provincias"
         });
 
         var map = new Map({
@@ -179,7 +179,7 @@
 
         // disables all navigation in the view
         function disableNavigation(view) {
-          view.popup.dockEnabled = false;
+          view.popup.dockEnabled = true;
 
           // Removes the zoom action on the popup
           view.popup.actions = [];
