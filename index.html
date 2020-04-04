@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Casos COVID19 en España</title>
+
+    <style>
+      html,
+      body, 
+      #mainViewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #canariasViewDiv {
+        padding: 0;
+        margin: 0;
+        height: 200px;
+        width: 300px;
+        background-color: rgba(255, 255, 255, 0.9);
+      }
+	  
+	  .esri-view-width-xlarge .esri-popup__main-container {
+		width: 400px !important;
+      }
+
+
+    </style>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.14/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.14/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Legend"
+      ], function(Map, MapView, FeatureLayer, Legend) {
+	  
+	  var layer = new FeatureLayer({
+          portalItem: {
+            id: "6a9fa0b2ff3443fea12c6d8963c61562"
+          },
+          outFields: ["*"],
+		  title: "Datos COVID19"
+        });
+
+        var map = new Map({
+          layers: [layer]
+        });
+
+        var mainView = new MapView({
+          container: "mainViewDiv",
+          map: map,
+          popup: {
+            highlightEnabled: false,
+            dockEnabled: true,
+            dockOptions: {
+              breakpoint: false,
+              position: "top-right"
+            }
+          },
+          extent: {
+            xmin: -2067672.4238408396,
+            ymin: 3802581.7988451226,
+            xmax: 1689360.390431145,
+            ymax: 5646854.417309365,
+            spatialReference: {
+              wkid: 102100
+            }
+          },
+          ui: {
+            components: ["attribution"]
+          }
+        });
+        mainView.ui.add(
+          new Legend({
+            view: mainView
+          }),
+          "top-left"
+        );
+
+        var canariasView = new MapView({
+          container: "canariasViewDiv",
+          map: map,
+          extent: {
+            xmin: -2096603.2272799485,
+            ymin: 3117560.43839324,
+            xmax: -1423957.3783704308,
+            ymax: 3431869.4987018686,
+            spatialReference: {
+              wkid: 102100
+            }
+          },
+          ui: {
+            components: []
+          }
+        });
+        mainView.ui.add("canariasViewDiv", "bottom-left");
+
+        mainView
+          .when(maintainFixedExtent)
+          .then(disableNavigation)
+          .then(disablePopupOnClick)
+          .then(enableHighlightOnPointerMove);
+		  
+        canariasView
+          .when(disableNavigation)
+          .then(disablePopupOnClick)
+          .then(enableHighlightOnPointerMove);
+
+
+        function maintainFixedExtent(view) {
+          var fixedExtent = view.extent.clone();
+          // keep a fixed extent in the view
+          // when the view size changes
+          view.on("resize", function() {
+            view.extent = fixedExtent;
+          });
+          return view;
+        };
+
+        var highlight = null;
+
+        function enableHighlightOnPointerMove(view) {
+          view.whenLayerView(layer).then(function(layerView) {
+            view.on("pointer-move", function(event) {
+              view.hitTest(event).then(function(response) {
+                const lastHighlight = highlight;
+
+                // if a feature is returned, highlight it
+                // and display its attributes in the popup
+                // if no features are returned, then close the popup
+                var id = null;
+
+                if (response.results.length) {
+                  var feature = response.results.filter(function(result) {
+                    return result.graphic.layer === layer;
+                  })[0].graphic;
+
+                  feature.popupTemplate = layer.popupTemplate;
+                  id = feature.attributes.OBJECTID_1;
+                  highlight = layerView.highlight([id]);
+                  var selectionId = mainView.popup.selectedFeature
+                    ? mainView.popup.selectedFeature.attributes.OBJECTID
+                    : null;
+
+                  if (highlight && id !== selectionId) {
+                    mainView.popup.open({
+                      features: [feature]
+                    });
+                  }
+                } else {
+                  if (mainView.popup.visible) {
+                    mainView.popup.close();
+                    mainView.popup.clear();
+                  }
+                }
+
+                // remove the previous highlight
+                if (lastHighlight) {
+                  lastHighlight.remove();
+                  lastHighlight = null;
+                }
+              });
+            });
+          });
+        }
+
+        // disables all navigation in the view
+        function disableNavigation(view) {
+          view.popup.dockEnabled = true;
+
+          // Removes the zoom action on the popup
+          view.popup.actions = [];
+
+          // stops propagation of default behavior when an event fires
+          function stopEvtPropagation(event) {
+            event.stopPropagation();
+          }
+
+          // disable mouse wheel scroll zooming on the view
+          view.navigation.mouseWheelZoomEnabled = false;
+
+          // disable zooming via double-click on the view
+          view.on("double-click", stopEvtPropagation);
+
+          // disable zooming out via double-click + Control on the view
+          view.on("double-click", ["Control"], stopEvtPropagation);
+
+          // disables pinch-zoom and panning on the view
+          view.navigation.browserTouchPanEnabled = false;
+          view.on("drag", stopEvtPropagation);
+
+          // disable the view's zoom box to prevent the Shift + drag
+          // and Shift + Control + drag zoom gestures.
+          view.on("drag", ["Shift"], stopEvtPropagation);
+          view.on("drag", ["Shift", "Control"], stopEvtPropagation);
+
+          // prevents zooming and rotation with the indicated keys
+          view.on("key-down", function(event) {
+            var prohibitedKeys = ["+", "-", "_", "=", "a", "d"];
+            var keyPressed = event.key.toLowerCase();
+            if (prohibitedKeys.indexOf(keyPressed) !== -1) {
+              event.stopPropagation();
+            }
+          });
+
+          return view;
+        }
+
+        // prevents the user from opening the popup with click
+
+        function disablePopupOnClick(view) {
+          view.on("click", function(event) {
+            event.stopPropagation();
+          });
+          return view;
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="mainViewDiv"></div>
+    <div id="canariasViewDiv" class="esri-widget"></div>
+  </body>
+</html>
