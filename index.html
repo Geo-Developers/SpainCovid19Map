@@ -6,7 +6,7 @@
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <title>Mapa de Casos de Covid-19 por provincias en España</title>
+    <title>Casos COVID19 en España</title>
 
     <style>
       html,
@@ -21,8 +21,8 @@
       #canariasViewDiv {
         padding: 0;
         margin: 0;
-        height: 150px;
-        width: 250px;
+        height: 200px;
+        width: 300px;
         background-color: rgba(255, 255, 255, 0.9);
       }
 	  
@@ -44,15 +44,16 @@
         "esri/Map",
         "esri/views/MapView",
         "esri/layers/FeatureLayer",
-        "esri/widgets/Legend"
-      ], function(Map, MapView, FeatureLayer, Legend) {
+        "esri/widgets/Legend",
+		"esri/widgets/Expand",
+      ], function(Map, MapView, FeatureLayer, Legend, Expand) {
 	  
 	  var layer = new FeatureLayer({
           portalItem: {
             id: "6a9fa0b2ff3443fea12c6d8963c61562"
           },
           outFields: ["*"],
-		  title: "Mapa de incidencia de Covid-19 por Provincias"
+		  title: "Datos COVID19"
         });
 
         var map = new Map({
@@ -83,12 +84,16 @@
             components: ["attribution"]
           }
         });
-        mainView.ui.add(
-          new Legend({
+		
+		var legend = new Legend({
             view: mainView
-          }),
-          "top-left"
-        );
+          });
+		  
+		var expand = new Expand({
+          view: mainView,
+          content: legend
+        });
+        mainView.ui.add(expand, "top-left");
 
         var canariasView = new MapView({
           container: "canariasViewDiv",
@@ -190,7 +195,7 @@
           }
 
           // disable mouse wheel scroll zooming on the view
-          view.navigation.mouseWheelZoomEnabled = true;
+          view.navigation.mouseWheelZoomEnabled = false;
 
           // disable zooming via double-click on the view
           view.on("double-click", stopEvtPropagation);
