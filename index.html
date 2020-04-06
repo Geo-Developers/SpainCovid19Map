@@ -6,7 +6,7 @@
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <title>Casos COVID19 en España</title>
+    <title>Mapa de Casos de Covid-19 por provincias en España</title>
 
     <style>
       html,
@@ -21,8 +21,8 @@
       #canariasViewDiv {
         padding: 0;
         margin: 0;
-        height: 200px;
-        width: 300px;
+        height: 150px;
+        width: 250px;
         background-color: rgba(255, 255, 255, 0.9);
       }
 	  
@@ -48,12 +48,12 @@
 		"esri/widgets/Expand",
       ], function(Map, MapView, FeatureLayer, Legend, Expand) {
 	  
-	  var layer = new FeatureLayer({
-          portalItem: {
-            id: "6a9fa0b2ff3443fea12c6d8963c61562"
-          },
-          outFields: ["*"],
-		  title: "Datos COVID19"
+	var layer = new FeatureLayer({
+	  portalItem: {
+	    id: "6a9fa0b2ff3443fea12c6d8963c61562"
+	  },
+	  outFields: ["*"],
+	  title: "Mapa de incidencia de Covid-19 por Provincias"
         });
 
         var map = new Map({
@@ -85,11 +85,11 @@
           }
         });
 		
-		var legend = new Legend({
+	var legend = new Legend({
             view: mainView
           });
 		  
-		var expand = new Expand({
+	var expand = new Expand({
           view: mainView,
           content: legend
         });
